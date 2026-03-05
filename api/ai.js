@@ -8,24 +8,29 @@ export default async function handler(req, res) {
 
   const { system, messages } = req.body;
 
+  // Convertir formato → Gemini
+  const geminiMessages = messages.map(m => ({
+    role: m.role === 'assistant' ? 'model' : 'user',
+    parts: [{ text: m.content }]
+  }));
+
+  if (system && geminiMessages.length > 0) {
+    geminiMessages[0].parts[0].text = `${system}\n\n${geminiMessages[0].parts[0].text}`;
+  }
+
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        system,
-        messages
-      })
-    });
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: geminiMessages })
+      }
+    );
 
     const data = await response.json();
-    res.status(200).json({ text: data.content?.[0]?.text || 'Sin respuesta' });
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Sin respuesta';
+    res.status(200).json({ text });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
