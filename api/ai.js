@@ -8,15 +8,9 @@ export default async function handler(req, res) {
 
   const { system, messages } = req.body;
 
-  // Convertir formato → Gemini
-  const geminiMessages = messages.map(m => ({
-    role: m.role === 'assistant' ? 'model' : 'user',
-    parts: [{ text: m.content }]
-  }));
-
-  if (system && geminiMessages.length > 0) {
-    geminiMessages[0].parts[0].text = `${system}\n\n${geminiMessages[0].parts[0].text}`;
-  }
+  // Gemini requiere alternar user/model, no puede empezar con model
+  // Combinar system + primer mensaje en uno solo
+  const fullPrompt = system ? `${system}\n\n${messages.map(m => `${m.role === 'user' ? 'Usuario' : 'Asistente'}: ${m.content}`).join('\n')}` : messages.map(m => m.content).join('\n');
 
   try {
     const response = await fetch(
@@ -24,12 +18,16 @@ export default async function handler(req, res) {
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents: geminiMessages })
+        body: JSON.stringify({
+          contents: [{ role: 'user', parts: [{ text: fullPrompt }] }],
+          generationConfig: { temperature: 0.7, maxOutputTokens: 1000 }
+        })
       }
     );
 
     const data = await response.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Sin respuesta';
+    console.log('Gemini response:', JSON.stringify(data));
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || data.error?.message || 'Sin respuesta';
     res.status(200).json({ text });
   } catch (err) {
     res.status(500).json({ error: err.message });
