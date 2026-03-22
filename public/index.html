@@ -159,6 +159,32 @@
     .modal-btns button:hover{background:var(--ink);color:var(--white)}
     .modal-btns button.primary{background:var(--ink);color:var(--white)}.modal-btns button.primary:hover{background:var(--ink2)}
     ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border)}
+
+    @media(max-width:768px){
+      header{flex-direction:column}
+      .logo-block{min-width:unset;padding:14px 20px;border-right:none;border-bottom:1px solid var(--border)}
+      .header-center{padding:12px 20px}
+      .month-name{min-width:unset;font-size:16px}
+      .layout{grid-template-columns:1fr;overflow:visible}
+      aside{height:auto;overflow:visible;border-right:none;border-bottom:2px solid var(--ink)}
+      main{overflow:visible}
+      .ticker{grid-template-columns:1fr 1fr}
+      .tick-item{padding:16px 20px;border-right:1px solid var(--border)}
+      .tick-item:nth-child(2){border-right:none}
+      .tick-item:nth-child(3){border-top:1px solid var(--border)}
+      .tick-item:nth-child(4){border-top:1px solid var(--border);border-right:none}
+      .tick-num{font-size:28px}
+      .charts-row{grid-template-columns:1fr}
+      .chart-block{border-right:none;border-bottom:1px solid var(--border)}
+      .chart-block:last-child{border-bottom:none}
+      .ai-block,.section-block{padding:20px}
+      .ai-cards-grid{grid-template-columns:1fr}
+      .goals-grid{grid-template-columns:1fr}
+      .section-top{flex-direction:column;gap:12px;align-items:flex-start}
+      .modal{width:calc(100vw - 40px);padding:24px}
+      #toastContainer{left:20px;right:20px}
+      .toast{min-width:unset}
+    }
   </style>
 </head>
 <body>
