@@ -261,6 +261,12 @@
     <div class="chart-block"><div class="chart-heading">Gastos por categoría</div><div class="chart-canvas"><canvas id="pieChart"></canvas></div></div>
     <div class="chart-block"><div class="chart-heading">Evolución 6 meses</div><div class="chart-canvas"><canvas id="barChart"></canvas></div></div>
   </div>
+  <div class="charts-row" style="grid-template-columns:1fr">
+    <div class="chart-block" style="border-right:none">
+      <div class="chart-heading">Gastos por día del mes</div>
+      <div class="chart-canvas" style="height:160px"><canvas id="dayChart"></canvas></div>
+    </div>
+  </div>
   <div class="ai-block">
     <div class="ai-top">
       <div class="ai-heading">Asesor Financiero <span class="ai-badge">IA</span></div>
@@ -412,7 +418,7 @@
   }
   window.deleteTrans=id=>{transactions=transactions.filter(t=>t.id!==id);save();renderAll();showToast('Eliminado','')};
   document.querySelectorAll('.f-btn').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.f-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');currentFilter=btn.dataset.f;renderTransactions()}));
-  let pieChartInst=null,barChartInst=null;
+  let pieChartInst=null,barChartInst=null,dayChartInst=null;
   function renderCharts(){
     const list=monthTransactions(),expense=list.filter(t=>t.type==='expense');
     const catMap={};expense.forEach(t=>{const cat=getCat(t.catId);if(!catMap[cat.name])catMap[cat.name]={total:0,color:cat.color};catMap[cat.name].total+=t.amount});
@@ -424,6 +430,23 @@
     const barExpense=months.map(m=>transactions.filter(t=>t.type==='expense'&&t.date.startsWith(m.key)).reduce((s,t)=>s+t.amount,0));
     if(barChartInst)barChartInst.destroy();
     barChartInst=new Chart(document.getElementById('barChart'),{type:'bar',data:{labels:months.map(m=>m.label),datasets:[{label:'Ingresos',data:barIncome,backgroundColor:'#1a7a4a20',borderColor:'#1a7a4a',borderWidth:2,borderRadius:0},{label:'Gastos',data:barExpense,backgroundColor:'#c0392b20',borderColor:'#c0392b',borderWidth:2,borderRadius:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#8a8a8a',font:{size:10,family:'Barlow Condensed'},boxWidth:8}},tooltip:{callbacks:{label:ctx=>` ${formatMoney(ctx.raw)}`}}},scales:{x:{ticks:{color:'#8a8a8a',font:{size:10}},grid:{display:false}},y:{ticks:{color:'#8a8a8a',font:{size:10},callback:v=>'$'+v.toLocaleString()},grid:{color:'#f0f0f0'}}}}});
+
+    // Gráfica por día del mes
+    const year=viewDate.getFullYear(),month=viewDate.getMonth();
+    const daysInMonth=new Date(year,month+1,0).getDate();
+    const dayLabels=[],dayData=[],dayColors=[];
+    for(let d=1;d<=daysInMonth;d++){
+      const ds=`${year}-${pad(month+1)}-${pad(d)}`;
+      const total=expense.filter(t=>t.date===ds).reduce((s,t)=>s+t.amount,0);
+      dayLabels.push(d);dayData.push(total);
+      dayColors.push(total>0?'#c0392b':'#e0e0e0');
+    }
+    if(dayChartInst)dayChartInst.destroy();
+    dayChartInst=new Chart(document.getElementById('dayChart'),{
+      type:'bar',
+      data:{labels:dayLabels,datasets:[{data:dayData,backgroundColor:dayColors,borderWidth:0,borderRadius:0}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{title:ctx=>`Día ${ctx[0].label}`,label:ctx=>ctx.raw>0?` ${formatMoney(ctx.raw)}`:' Sin gastos'}}},scales:{x:{ticks:{color:'#8a8a8a',font:{size:9},maxRotation:0},grid:{display:false}},y:{ticks:{color:'#8a8a8a',font:{size:10},callback:v=>v>0?'$'+v.toLocaleString():''},grid:{color:'#f0f0f0'}}}}
+    });
   }
   let aiChatHistory=[];
   function buildFinancialContext(){
